@@ -169,7 +169,10 @@ class ParticipantController extends Controller
 
     public function exportPdf(Participant $participant): Response
     {
-        $fixtures = Fixture::orderBy('match_number')->get();
+        $fixtures = Fixture::query()
+            ->orderBy('match_date')
+            ->orderBy('match_number')
+            ->get();
         $predictions = $participant->predictions()->get()->keyBy('fixture_id');
         $position = $this->participantPosition($participant);
 
