@@ -5,7 +5,7 @@
 
 # Hola, {{ $participant->name }}
 
-Aquí están tus **72 pronósticos** de la Kinela Mundial FIFA 2026.
+Adjuntamos tu **kinela en PDF** con los 72 pronósticos ordenados por fecha del partido.
 
 ## Tu posición actual
 
@@ -15,15 +15,7 @@ Aquí están tus **72 pronósticos** de la Kinela Mundial FIFA 2026.
 Marcador exacto = 3 pts · Ganador o empate = 1 pt
 </x-mail::panel>
 
-@foreach ($fixtures->groupBy('group_name') as $group => $groupFixtures)
-### Grupo {{ $group }}
-
-@foreach ($groupFixtures as $fixture)
-@php $prediction = $participant->predictions->firstWhere('fixture_id', $fixture->id); @endphp
-**#{{ $fixture->match_number }}** {{ $fixture->home_team }} **{{ $prediction?->home_score ?? 0 }}-{{ $prediction?->away_score ?? 0 }}** {{ $fixture->away_team }}
-@endforeach
-
-@endforeach
+Abre el archivo PDF adjunto para ver el detalle completo de cada partido, tu pronóstico y los puntos obtenidos.
 
 <x-mail::button :url="route('participants.show', $participant)">
 Ver tu kinela en la web

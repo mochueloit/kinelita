@@ -2,26 +2,22 @@
 
 namespace App\Mail;
 
-use App\Models\Fixture;
 use App\Models\Participant;
+use App\Services\ParticipantPdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
 
 class ParticipantPredictionsMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @param  Collection<int, Fixture>  $fixtures
-     */
     public function __construct(
         public Participant $participant,
-        public Collection $fixtures,
         public int $position,
         public int $totalParticipants,
     ) {}
@@ -29,7 +25,7 @@ class ParticipantPredictionsMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tus pronósticos — Kinela Mundial 2026',
+            subject: 'Tu kinela — Kinela Mundial 2026',
         );
     }
 
@@ -38,5 +34,21 @@ class ParticipantPredictionsMail extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'emails.participant-predictions',
         );
+    }
+
+    public function attachments(): array
+    {
+        $pdfService = app(ParticipantPdfService::class);
+
+        $this->participant->loadMissing('predictions');
+
+        $filename = $pdfService->filename($this->participant);
+
+        return [
+            Attachment::fromData(
+                fn () => $pdfService->output($this->participant),
+                $filename,
+            )->withMime('application/pdf'),
+        ];
     }
 }

@@ -9,11 +9,10 @@ use App\Models\Participant;
 use App\Models\Prediction;
 use App\Services\ActivityLogService;
 use App\Services\KinelaScoringService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\ParticipantPdfService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -167,25 +166,9 @@ class ParticipantController extends Controller
             ->with('success', 'Participante eliminado.');
     }
 
-    public function exportPdf(Participant $participant): Response
+    public function exportPdf(Participant $participant, ParticipantPdfService $pdfService): Response
     {
-        $fixtures = Fixture::query()
-            ->orderBy('match_date')
-            ->orderBy('match_number')
-            ->get();
-        $predictions = $participant->predictions()->get()->keyBy('fixture_id');
-        $position = $this->participantPosition($participant);
-
-        $pdf = Pdf::loadView('admin.participants.pdf', compact(
-            'participant',
-            'fixtures',
-            'predictions',
-            'position',
-        ))->setPaper('a4', 'portrait');
-
-        $filename = 'kinela-'.Str::slug($participant->name).'.pdf';
-
-        return $pdf->download($filename);
+        return $pdfService->download($participant);
     }
 
     public function emailPredictions(
@@ -199,22 +182,18 @@ class ParticipantController extends Controller
             ]);
         }
 
-        $fixtures = Fixture::orderBy('match_number')->get();
         $totalParticipants = Participant::count();
         $position = $this->participantPosition($participant) ?? $totalParticipants;
 
-        $participant->load('predictions');
-
         Mail::to($participant->email)->queue(new ParticipantPredictionsMail(
             $participant,
-            $fixtures,
             $position,
             $totalParticipants,
         ));
 
         $activityLog->log(
             'participant.predictions_emailed',
-            "Pronósticos enviados por correo a {$participant->name}",
+            "Kinela PDF enviada por correo a {$participant->name}",
             $participant,
             ['email' => $participant->email],
             $request,
@@ -222,7 +201,7 @@ class ParticipantController extends Controller
 
         return back()->with(
             'success',
-            "Pronósticos encolados para envío a {$participant->email}. Asegúrate de tener el worker de cola activo.",
+            "Kinela en PDF encolada para envío a {$participant->email}. Asegúrate de tener el worker de cola activo.",
         );
     }
 

@@ -44,7 +44,7 @@
                                 @if ($participant->email)
                                     <form method="POST" action="{{ route('admin.participants.email-predictions', $participant) }}" class="inline">
                                         @csrf
-                                        <button type="submit" class="wc-link" onclick="return confirm('¿Enviar pronósticos por correo a {{ $participant->email }}?')">
+                                        <button type="submit" class="wc-link" onclick="return confirm('¿Enviar kinela en PDF por correo a {{ $participant->email }}?')">
                                             Email
                                         </button>
                                     </form>
