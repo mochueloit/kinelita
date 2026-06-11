@@ -14,7 +14,9 @@
                 Kinela Mundial 2026
             </a>
             <div class="flex items-center gap-4 text-sm">
-                <a href="{{ route('ranking') }}" class="wc-nav-link">Ranking</a>
+                <a href="{{ route('ranking') }}" @class(['wc-nav-link', 'wc-nav-link-active' => request()->routeIs('ranking') || request()->routeIs('participants.show')])>
+                    Ranking
+                </a>
                 @auth
                     <a href="{{ route('admin.dashboard') }}" class="wc-nav-link">Admin</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">

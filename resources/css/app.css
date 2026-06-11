@@ -35,6 +35,10 @@
         @apply text-slate-600 hover:text-sky-600 transition font-medium;
     }
 
+    .wc-nav-link-active {
+        @apply text-sky-700 font-bold border-b-2 border-sky-500 pb-0.5;
+    }
+
     .wc-nav-brand {
         @apply text-xl font-bold text-sky-600;
     }

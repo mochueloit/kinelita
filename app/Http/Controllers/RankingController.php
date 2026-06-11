@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fixture;
 use App\Models\Participant;
 use App\Models\RankingComment;
 use Illuminate\View\View;
@@ -20,6 +21,9 @@ class RankingController extends Controller
             ->limit(50)
             ->get();
 
-        return view('ranking', compact('participants', 'comments'));
+        $playedCount = Fixture::query()->where('is_played', true)->count();
+        $totalFixtures = Fixture::query()->count();
+
+        return view('ranking', compact('participants', 'comments', 'playedCount', 'totalFixtures'));
     }
 }

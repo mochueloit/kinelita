@@ -37,13 +37,27 @@
                         <td class="font-semibold text-slate-700">{{ $participant->name }}</td>
                         <td class="text-slate-600 text-sm">{{ $participant->email ?? '—' }}</td>
                         <td class="text-right"><span class="wc-points text-xl">{{ $participant->total_points }}</span></td>
-                        <td class="text-right space-x-3">
-                            <a href="{{ route('admin.participants.edit', $participant) }}" class="wc-link">Editar</a>
-                            <form method="POST" action="{{ route('admin.participants.destroy', $participant) }}" class="inline" onsubmit="return confirm('¿Eliminar este participante?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Eliminar</button>
-                            </form>
+                        <td class="text-right">
+                            <div class="flex flex-wrap justify-end gap-2 text-sm">
+                                <a href="{{ route('participants.show', $participant) }}" class="wc-link" title="Ver kinela pública">Ver</a>
+                                <a href="{{ route('admin.participants.pdf', $participant) }}" class="wc-link" title="Descargar PDF">PDF</a>
+                                @if ($participant->email)
+                                    <form method="POST" action="{{ route('admin.participants.email-predictions', $participant) }}" class="inline">
+                                        @csrf
+                                        <button type="submit" class="wc-link" onclick="return confirm('¿Enviar pronósticos por correo a {{ $participant->email }}?')">
+                                            Email
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-slate-400" title="Sin correo registrado">Email</span>
+                                @endif
+                                <a href="{{ route('admin.participants.edit', $participant) }}" class="wc-link">Editar</a>
+                                <form method="POST" action="{{ route('admin.participants.destroy', $participant) }}" class="inline" onsubmit="return confirm('¿Eliminar este participante?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Eliminar</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

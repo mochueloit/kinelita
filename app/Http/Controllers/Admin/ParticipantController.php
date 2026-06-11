@@ -3,15 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ParticipantPredictionsMail;
 use App\Models\Fixture;
 use App\Models\Participant;
 use App\Models\Prediction;
 use App\Services\ActivityLogService;
 use App\Services\KinelaScoringService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class ParticipantController extends Controller
 {
@@ -160,5 +165,73 @@ class ParticipantController extends Controller
         return redirect()
             ->route('admin.participants.index')
             ->with('success', 'Participante eliminado.');
+    }
+
+    public function exportPdf(Participant $participant): Response
+    {
+        $fixtures = Fixture::orderBy('match_number')->get();
+        $predictions = $participant->predictions()->get()->keyBy('fixture_id');
+        $position = $this->participantPosition($participant);
+
+        $pdf = Pdf::loadView('admin.participants.pdf', compact(
+            'participant',
+            'fixtures',
+            'predictions',
+            'position',
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'kinela-'.Str::slug($participant->name).'.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    public function emailPredictions(
+        Request $request,
+        Participant $participant,
+        ActivityLogService $activityLog,
+    ): RedirectResponse {
+        if (blank($participant->email)) {
+            return back()->withErrors([
+                'email' => "El participante {$participant->name} no tiene correo registrado.",
+            ]);
+        }
+
+        $fixtures = Fixture::orderBy('match_number')->get();
+        $totalParticipants = Participant::count();
+        $position = $this->participantPosition($participant) ?? $totalParticipants;
+
+        $participant->load('predictions');
+
+        Mail::to($participant->email)->queue(new ParticipantPredictionsMail(
+            $participant,
+            $fixtures,
+            $position,
+            $totalParticipants,
+        ));
+
+        $activityLog->log(
+            'participant.predictions_emailed',
+            "Pronósticos enviados por correo a {$participant->name}",
+            $participant,
+            ['email' => $participant->email],
+            $request,
+        );
+
+        return back()->with(
+            'success',
+            "Pronósticos encolados para envío a {$participant->email}. Asegúrate de tener el worker de cola activo.",
+        );
+    }
+
+    private function participantPosition(Participant $participant): ?int
+    {
+        $rankedIds = Participant::query()
+            ->orderByDesc('total_points')
+            ->orderBy('name')
+            ->pluck('id');
+
+        $index = $rankedIds->search($participant->id);
+
+        return $index === false ? null : $index + 1;
     }
 }

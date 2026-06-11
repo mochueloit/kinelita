@@ -13,4 +13,9 @@ class Participant extends Model
     {
         return $this->hasMany(Prediction::class);
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(ParticipantComment::class)->latest();
+    }
 }
